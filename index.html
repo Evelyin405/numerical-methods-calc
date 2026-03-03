@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Numerical Methods Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #EEF1FB;
+      --surface:   #FFFFFF;
+      --surface2:  #F7F9FF;
+      --border:    #DDE3F5;
+      --border2:   #C8D1EE;
+      --ink:       #111827;
+      --ink2:      #4B5470;
+      --ink3:      #9BA3C0;
+
+      --nr:        #4F6EF7;
+      --nr-light:  #EAF0FF;
+      --nr-mid:    #C5D3FD;
+
+      --lag:       #0DAF84;
+      --lag-light: #E6FAF5;
+      --lag-mid:   #A3E9D8;
+
+      --rk:        #F05A2A;
+      --rk-light:  #FFF0EB;
+      --rk-mid:    #FFC9B5;
+
+      --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+      --r: 16px;
+      --r-sm: 10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    /* ═══ LAYOUT ═══ */
+    .page { max-width: 1080px; margin: 0 auto; padding: 0 24px 100px; }
+
+    /* ═══ TOP BAR ═══ */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0 32px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .logo-area { display: flex; align-items: center; gap: 14px; }
+
+    .logo-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4F6EF7, #8B5CF6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 14px rgba(79,110,247,.35);
+      flex-shrink: 0;
+    }
+
+    .logo-text h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .logo-text p {
+      font-size: 0.76rem;
+      color: var(--ink3);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    .syntax-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .syntax-pill {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      color: var(--ink2);
+      padding: 5px 10px;
+      border-radius: 7px;
+      white-space: nowrap;
+    }
+
+    /* ═══ METHOD TABS ═══ */
+    .method-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .tabBtn {
+      font-family: var(--sans);
+      font-size: 0.84rem;
+      font-weight: 700;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--ink2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.18s;
+      position: relative;
+      overflow: hidden;
+    }
+    .tabBtn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.18s;
+    }
+    .tabBtn:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+
+    .tab-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.95rem;
+      flex-shrink: 0;
+      transition: all 0.18s;
+    }
+
+    .tab-info { display: flex; flex-direction: column; gap: 1px; }
+    .tab-name { font-size: 0.84rem; font-weight: 700; line-height: 1.1; }
+    .tab-desc { font-size: 0.7rem; font-weight: 500; color: var(--ink3); }
+
+    /* NR active */
+    .tabBtn[data-tab="nr"] .tab-icon { background: var(--nr-light); color: var(--nr); }
+    .tabBtn[data-tab="nr"].active {
+      border-color: var(--nr);
+      background: linear-gradient(135deg, #4F6EF705, #4F6EF710);
+      box-shadow: 0 0 0 3px rgba(79,110,247,.12), 0 4px 20px rgba(79,110,247,.14);
+      color: var(--nr);
+    }
+    .tabBtn[data-tab="nr"].active .tab-icon { background: var(--nr); color: #fff; box-shadow: 0 4px 10px rgba(79,110,247,.4); }
+    .tabBtn[data-tab="nr"].active .tab-desc { color: rgba(79,110,247,.6); }
+
+    /* LAG active */
+    .tabBtn[data-tab="lag"] .tab-icon { background: var(--lag-light); color: var(--lag); }
+    .tabBtn[data-tab="lag"].active {
+      border-color: var(--lag);
+      background: linear-gradient(135deg, #0DAF8405, #0DAF8410);
+      box-shadow: 0 0 0 3px rgba(13,175,132,.12), 0 4px 20px rgba(13,175,132,.14);
+      color: var(--lag);
+    }
+    .tabBtn[data-tab="lag"].active .tab-icon { background: var(--lag); color: #fff; box-shadow: 0 4px 10px rgba(13,175,132,.4); }
+    .tabBtn[data-tab="lag"].active .tab-desc { color: rgba(13,175,132,.6); }
+
+    /* RK active */
+    .tabBtn[data-tab="rk4"] .tab-icon { background: var(--rk-light); color: var(--rk); }
+    .tabBtn[data-tab="rk4"].active {
+      border-color: var(--rk);
+      background: linear-gradient(135deg, #F05A2A05, #F05A2A10);
+      box-shadow: 0 0 0 3px rgba(240,90,42,.12), 0 4px 20px rgba(240,90,42,.14);
+      color: var(--rk);
+    }
+    .tabBtn[data-tab="rk4"].active .tab-icon { background: var(--rk); color: #fff; box-shadow: 0 4px 10px rgba(240,90,42,.4); }
+    .tabBtn[data-tab="rk4"].active .tab-desc { color: rgba(240,90,42,.6); }
+
+    @media (max-width: 600px) {
+      .method-strip { grid-template-columns: 1fr; }
+      .tab-desc { display: none; }
+    }
+
+    /* ═══ PANEL ═══ */
+    .tabPanel { display: none; }
+    .tabPanel.active {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 18px;
+      animation: fadeUp .22s ease;
+    }
+    @media (max-width: 860px) { .tabPanel.active { grid-template-columns: 1fr; } }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══ CARD ═══ */
+    .card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04), 0 8px 32px rgba(0,0,0,.05);
+    }
+
+    .card-head {
+      padding: 16px 20px;
+      border-bottom: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-head-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    #nr  .card-head-dot { background: var(--nr); box-shadow: 0 0 0 3px var(--nr-light); }
+    #lag .card-head-dot { background: var(--lag); box-shadow: 0 0 0 3px var(--lag-light); }
+    #rk4 .card-head-dot { background: var(--rk); box-shadow: 0 0 0 3px var(--rk-light); }
+
+    .card-head h2 {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--ink);
+      flex: 1;
+    }
+    .card-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 3px 9px;
+      border-radius: 6px;
+    }
+    #nr  .card-tag { background: var(--nr-light);  color: var(--nr);  }
+    #lag .card-tag { background: var(--lag-light); color: var(--lag); }
+    #rk4 .card-tag { background: var(--rk-light);  color: var(--rk);  }
+
+    /* ── card header accent bar ── */
+    .card-head {
+      position: relative;
+    }
+    .card-head::after {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+    }
+    #nr  .card-head::after { background: var(--nr); }
+    #lag .card-head::after { background: var(--lag); }
+    #rk4 .card-head::after { background: var(--rk); }
+
+    .card-body { padding: 20px; }
+
+    /* ═══ FORM ═══ */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 500px) { .row { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+
+    label {
+      font-size: 0.71rem;
+      font-weight: 700;
+      color: var(--ink3);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    input, textarea, select {
+      font-family: var(--sans);
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      background: var(--surface2);
+      color: var(--ink);
+      padding: 9px 12px;
+      font-size: 0.91rem;
+      font-weight: 500;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    input:focus, textarea:focus, select:focus { background: #fff; }
+
+    #nr  input:focus, #nr  select:focus, #nr  textarea:focus  { border-color: var(--nr);  box-shadow: 0 0 0 3px rgba(79,110,247,.13); }
+    #lag input:focus, #lag select:focus, #lag textarea:focus  { border-color: var(--lag); box-shadow: 0 0 0 3px rgba(13,175,132,.13); }
+    #rk4 input:focus, #rk4 select:focus, #rk4 textarea:focus { border-color: var(--rk);  box-shadow: 0 0 0 3px rgba(240,90,42,.13); }
+
+    textarea {
+      min-height: 108px;
+      resize: vertical;
+      font-family: var(--mono);
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+
+    /* ── divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    .section-label {
+      font-size: 0.69rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--ink3);
+      margin-bottom: 10px;
+    }
+
+    /* ═══ ACTIONS ═══ */
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      align-items: center;
+    }
+
+    button {
+      font-family: var(--sans);
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--r-sm);
+      cursor: pointer;
+      transition: all .15s;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-run {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn-run::before { content: '▶'; font-size: 0.6rem; }
+
+    #nr  .btn-run { background: var(--nr);  color: #fff; box-shadow: 0 4px 12px rgba(79,110,247,.35); }
+    #lag .btn-run { background: var(--lag); color: #fff; box-shadow: 0 4px 12px rgba(13,175,132,.35); }
+    #rk4 .btn-run { background: var(--rk);  color: #fff; box-shadow: 0 4px 12px rgba(240,90,42,.35); }
+
+    .btn-run:hover  { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn-run:active { transform: translateY(1px); box-shadow: none; }
+
+    .btn-copy {
+      margin-left: auto;
+      background: var(--surface2);
+      color: var(--ink2);
+      border: 1.5px solid var(--border);
+      font-size: 0.8rem;
+      padding: 9px 14px;
+    }
+    .btn-copy:hover { background: var(--border); color: var(--ink); }
+
+    /* ═══ OUTPUT ═══ */
+    .out-wrap {
+      position: relative;
+    }
+
+    .out {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 16px;
+      overflow: auto;
+      max-height: 460px;
+      color: var(--ink2);
+      min-height: 120px;
+    }
+
+    #nr  .out:focus-within  { border-color: var(--nr-mid); }
+    #lag .out:focus-within  { border-color: var(--lag-mid); }
+    #rk4 .out:focus-within  { border-color: var(--rk-mid); }
+
+    .out::-webkit-scrollbar { width: 4px; height: 4px; }
+    .out::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+    .out-footer {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      font-size: 0.73rem;
+      color: var(--ink3);
+      line-height: 1.6;
+    }
+    .out-footer code {
+      font-family: var(--mono);
+      font-size: 0.85em;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      padding: 1px 5px;
+      border-radius: 5px;
+      color: var(--ink2);
+    }
+
+    /* ═══ FORMULA STRIP ═══ */
+    .formula-strip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--r-sm);
+      margin-bottom: 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    #nr  .formula-strip { background: var(--nr-light);  color: var(--nr);  border: 1px solid var(--nr-mid); }
+    #lag .formula-strip { background: var(--lag-light); color: var(--lag); border: 1px solid var(--lag-mid); }
+    #rk4 .formula-strip { background: var(--rk-light);  color: var(--rk);  border: 1px solid var(--rk-mid); }
+
+    .formula-strip span { font-family: var(--mono); font-size: 0.82rem; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="logo-area">
+      <div class="logo-icon">∫</div>
+      <div class="logo-text">
+        <h1>Numerical Methods</h1>
+        <p>Step-by-step calculator · matches textbook rounding</p>
+      </div>
+    </div>
+    <div class="syntax-pills">
+      <span class="syntax-pill">x, y, Math.sin, Math.cos</span>
+      <span class="syntax-pill">^ for powers</span>
+      <span class="syntax-pill">Math.log(x)/Math.log(10) = log₁₀</span>
+    </div>
+  </div>
+
+  <!-- METHOD TABS -->
+  <div class="method-strip">
+    <button class="tabBtn active" data-tab="nr">
+      <div class="tab-icon">ƒ</div>
+      <div class="tab-info">
+        <span class="tab-name">Newton–Raphson</span>
+        <span class="tab-desc">Root finding · f(x) = 0</span>
+      </div>
+    </button>
+    <button class="tabBtn" data-tab="lag">
+      <div class="tab-icon">Lᵢ</div>
+      <div class="tab-info">
+        <span class="tab-name">Lagrange</span>
+        <span class="tab-desc">Interpolation · unequal intervals</span>
+      </div>
+    </button>
+    <button class="tabBtn" data-tab="rk4">
+      <div class="tab-icon">k₄</div>
+      <div class="tab-info">
+        <span class="tab-name">Runge–Kutta 4</span>
+        <span class="tab-desc">ODE solver · dy/dx = f(x,y)</span>
+      </div>
+    </button>
+  </div>
+
+  <!-- ══ NR ══ -->
+  <section id="nr" class="tabPanel active">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-dot"></div>
+        <h2>Inputs</h2>
+        <span class="card-tag">Newton–Raphson</span>
+      </div>
+      <div class="card-body">
+        <div class="formula-strip">
+          Formula: <span>x&#x208(n+1) = xₙ − f(xₙ) / f′(xₙ)</span>
+        </div>
+
+        <p class="section-label">Function</p>
+        <div class="row">
+          <div class="field"><label>f(x)</label><input id="nr_fx" value="x^3 - x - 1"/></div>
+          <div class="field"><label>f′(x)</label><input id="nr_dfx" value="3*x^2 - 1"/></div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="section-label">Parameters</p>
+        <div class="row">
+          <div class="field"><label>Initial guess x₀</label><input id="nr_x0" type="number" value="1" step="any"/></div>
+          <div class="field"><label>Max iterations</label><input id="nr_n" type="number" value="10" min="1"/></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Tolerance</label><input id="nr_tol" type="number" value="0.0005" step="any"/></div>
+          <div class="field"><label>Display decimals</label><input id="nr_disp" type="number" value="6" min="0" max="15"/></div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="section-label">Rounding</p>
+        <div class="row">
+          <div class="field">
+            <label>Round each step</label>
+            <select id="nr_round_mode">
+              <option value="none">No — full precision</option>
+              <option value="step">Yes — match PDF rounding</option>
+            </select>
+          </div>
+          <div class="field"><label>Step rounding decimals</label><input id="nr_round_dec" type="number" value="3" min="0" max="15"/></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-run" onclick="runNewton()">Calculate</button>
+          <button class="btn-copy" onclick="copyOutput('nr_out')">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-dot"></div>
+        <h2>Output</h2>
+        <span class="card-tag">Iteration table</span>
+      </div>
+      <div class="card-body">
+        <div id="nr_out" class="out">Results will appear here after you click Calculate.</div>
+        <div class="out-footer">
+          <code>Math.sin</code> <code>Math.cos</code> <code>Math.tan</code>
+          <code>Math.exp</code> <code>Math.log</code> <code>Math.sqrt</code>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ LAGRANGE ══ -->
+  <section id="lag" class="tabPanel">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-dot"></div>
+        <h2>Inputs</h2>
+        <span class="card-tag">Lagrange</span>
+      </div>
+      <div class="card-body">
+        <div class="formula-strip">
+          Formula: <span>y(x) = Σ yᵢ · Lᵢ(x)</span>
+        </div>
+
+        <p class="section-label">Target</p>
+        <div class="row">
+          <div class="field"><label>Find y at x =</label><input id="lag_x" type="number" value="10" step="any"/></div>
+          <div class="field"><label>Display decimals</label><input id="lag_disp" type="number" value="6" min="0" max="15"/></div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="section-label">Data points — one per line &nbsp;(x &nbsp; y)</p>
+        <textarea id="lag_pts">5 12
+6 13
+9 14
+11 16</textarea>
+
+        <div class="divider"></div>
+        <p class="section-label">Rounding</p>
+        <div class="row">
+          <div class="field">
+            <label>Round each term</label>
+            <select id="lag_round_mode">
+              <option value="none">No — full precision</option>
+              <option value="step">Yes — round Lᵢ & partials</option>
+            </select>
+          </div>
+          <div class="field"><label>Step rounding decimals</label><input id="lag_round_dec" type="number" value="4" min="0" max="15"/></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-run" onclick="runLagrange()">Calculate</button>
+          <button class="btn-copy" onclick="copyOutput('lag_out')">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-dot"></div>
+        <h2>Output</h2>
+        <span class="card-tag">Basis polynomials</span>
+      </div>
+      <div class="card-body">
+        <div id="lag_out" class="out">Results will appear here after you click Calculate.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ RK4 ══ -->
+  <section id="rk4" class="tabPanel">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-dot"></div>
+        <h2>Inputs</h2>
+        <span class="card-tag">Runge–Kutta 4</span>
+      </div>
+      <div class="card-body">
+        <div class="formula-strip">
+          Formula: <span>yₙ₊₁ = yₙ + (k₁ + 2k₂ + 2k₃ + k₄) / 6</span>
+        </div>
+
+        <p class="section-label">Differential equation</p>
+        <div class="row">
+          <div class="field"><label>f(x, y) = dy/dx</label><input id="rk_f" value="x + y^2"/></div>
+          <div class="field"><label>Step size h</label><input id="rk_h" type="number" value="0.1" step="any"/></div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="section-label">Initial conditions</p>
+        <div class="row">
+          <div class="field"><label>x₀</label><input id="rk_x0" type="number" value="0" step="any"/></div>
+          <div class="field"><label>y₀</label><input id="rk_y0" type="number" value="1" step="any"/></div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="section-label">Parameters</p>
+        <div class="row">
+          <div class="field"><label>Target x</label><input id="rk_xt" type="number" value="0.1" step="any"/></div>
+          <div class="field"><label>Display decimals</label><input id="rk_disp" type="number" value="6" min="0" max="15"/></div>
+        </div>
+
+        <div class="divider"></div>
+        <p class="section-label">Rounding</p>
+        <div class="row">
+          <div class="field">
+            <label>Round each step</label>
+            <select id="rk_round_mode">
+              <option value="none">No — full precision</option>
+              <option value="step">Yes — round k1..k4 & y</option>
+            </select>
+          </div>
+          <div class="field"><label>Step rounding decimals</label><input id="rk_round_dec" type="number" value="4" min="0" max="15"/></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn-run" onclick="runRK4()">Calculate</button>
+          <button class="btn-copy" onclick="copyOutput('rk_out')">Copy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-dot"></div>
+        <h2>Output</h2>
+        <span class="card-tag">k₁ k₂ k₃ k₄ table</span>
+      </div>
+      <div class="card-body">
+        <div id="rk_out" class="out">Results will appear here after you click Calculate.</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // ── TABS ──
+  const tabButtons = document.querySelectorAll(".tabBtn");
+  const panels = document.querySelectorAll(".tabPanel");
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const id = btn.dataset.tab;
+      panels.forEach(p => p.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    });
+  });
+
+  function setOut(elId, text) { document.getElementById(elId).textContent = text; }
+
+  function toNumber(v) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) throw new Error("Invalid number: " + v);
+    return n;
+  }
+
+  function compileExpr(expr, vars) {
+    let e = String(expr).trim();
+    if (!e) throw new Error("Expression is empty");
+    e = e.replaceAll("^", "**");
+    const bad = /(while|for|function|=>|document|window|eval|new\s+Function|constructor|__proto__|prototype|fetch|XMLHttpRequest|localStorage|sessionStorage)/i;
+    if (bad.test(e)) throw new Error("Unsafe token detected in expression.");
+    const argNames = [...Object.keys(vars), "Math"];
+    let fn;
+    try { fn = Function(...argNames, `"use strict"; return (${e});`); }
+    catch (err) { throw new Error("Expression parse error: " + err.message); }
+    return (...vals) => {
+      try {
+        const out = fn(...vals, Math);
+        if (!Number.isFinite(out)) throw new Error("Result is not finite.");
+        return out;
+      } catch (err) { throw new Error("Expression eval error: " + err.message); }
+    };
+  }
+
+  function roundTo(x, d) { const p = 10 ** d; return Math.round((x + Number.EPSILON) * p) / p; }
+  function fmt(x, d) { return Number.isFinite(x) ? Number(x).toFixed(d) : "NaN"; }
+  function copyOutput(id) { navigator.clipboard.writeText(document.getElementById(id).textContent); }
+
+  // ── NEWTON–RAPHSON ──
+  function runNewton() {
+    const fxStr  = document.getElementById("nr_fx").value;
+    const dfxStr = document.getElementById("nr_dfx").value;
+    let x        = toNumber(document.getElementById("nr_x0").value);
+    const maxIt  = Math.max(1, parseInt(document.getElementById("nr_n").value || "10", 10));
+    const tol    = Math.abs(toNumber(document.getElementById("nr_tol").value));
+    const disp   = Math.max(0, Math.min(15, parseInt(document.getElementById("nr_disp").value || "6", 10)));
+    const roundMode = document.getElementById("nr_round_mode").value;
+    const rdec   = Math.max(0, Math.min(15, parseInt(document.getElementById("nr_round_dec").value || "3", 10)));
+
+    let fx  = compileExpr(fxStr,  { x: 0 });
+    let dfx = compileExpr(dfxStr, { x: 0 });
+
+    let out = "NEWTON–RAPHSON METHOD\n";
+    out += "f(x)  = " + fxStr + "\n";
+    out += "f'(x) = " + dfxStr + "\n\n";
+    out += "n | x_n | f(x_n) | f'(x_n) | x_{n+1} | |x_{n+1}-x_n|\n";
+    out += "-".repeat(74) + "\n";
+
+    let success = false;
+    for (let n = 0; n < maxIt; n++) {
+      let fxn = fx(x), dfxn = dfx(x);
+      if (roundMode === "step") { x = roundTo(x, rdec); fxn = roundTo(fxn, rdec); dfxn = roundTo(dfxn, rdec); }
+      if (Math.abs(dfxn) < 1e-14) { out += `\nERROR: f'(x_n) ≈ 0 at n=${n}. Try a different x₀.\n`; setOut("nr_out", out); return; }
+      let xNext = x - (fxn / dfxn);
+      if (roundMode === "step") xNext = roundTo(xNext, rdec);
+      const diff = Math.abs(xNext - x);
+      out += `${String(n).padEnd(2)}| ${fmt(x, disp).padEnd(12)}| ${fmt(fxn, disp).padEnd(12)}| ${fmt(dfxn, disp).padEnd(12)}| ${fmt(xNext, disp).padEnd(12)}| ${fmt(diff, disp)}\n`;
+      if (diff <= tol) { success = true; x = xNext; out += `\nRESULT  x ≈ ${fmt(x, disp)}  (converged)\n`; break; }
+      x = xNext;
+    }
+    if (!success) out += `\nNote: max iterations reached.  Last x ≈ ${fmt(x, disp)}\n`;
+    setOut("nr_out", out);
+  }
+
+  // ── LAGRANGE ──
+  function parsePoints(text) {
+    const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const pts = [];
+    for (const line of lines) {
+      const parts = line.split(/[\s,]+/).filter(Boolean);
+      if (parts.length < 2) throw new Error("Each line must be: x y");
+      pts.push({ x: toNumber(parts[0]), y: toNumber(parts[1]) });
+    }
+    if (pts.length < 2) throw new Error("Enter at least 2 points.");
+    const set = new Set(pts.map(p => p.x));
+    if (set.size !== pts.length) throw new Error("Duplicate x values found.");
+    return pts;
+  }
+
+  function runLagrange() {
+    const xt        = toNumber(document.getElementById("lag_x").value);
+    const disp      = Math.max(0, Math.min(15, parseInt(document.getElementById("lag_disp").value || "6", 10)));
+    const roundMode = document.getElementById("lag_round_mode").value;
+    const rdec      = Math.max(0, Math.min(15, parseInt(document.getElementById("lag_round_dec").value || "4", 10)));
+    let pts;
+    try { pts = parsePoints(document.getElementById("lag_pts").value); }
+    catch (err) { setOut("lag_out", "ERROR: " + err.message); return; }
+
+    let out = "LAGRANGE INTERPOLATION\n";
+    out += `Target x = ${xt}\n\nPoints:\n`;
+    pts.forEach((p, i) => out += `  P${i}: (${p.x}, ${p.y})\n`);
+    out += "\ni | y_i | L_i(x) | term = y_i * L_i(x)\n";
+    out += "-".repeat(58) + "\n";
+    let sum = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const xi = pts[i].x, yi = pts[i].y;
+      let Li = 1;
+      for (let j = 0; j < pts.length; j++) { if (i !== j) Li *= (xt - pts[j].x) / (xi - pts[j].x); }
+      let term = yi * Li;
+      if (roundMode === "step") { Li = roundTo(Li, rdec); term = roundTo(term, rdec); sum = roundTo(sum + term, rdec); }
+      else sum += term;
+      out += `${String(i).padEnd(2)}| ${fmt(yi, disp).padEnd(12)}| ${fmt(Li, disp).padEnd(12)}| ${fmt(term, disp)}\n`;
+    }
+    out += `\nRESULT  y(${xt}) ≈ ${fmt(sum, disp)}\n`;
+    setOut("lag_out", out);
+  }
+
+  // ── RK4 ──
+  function runRK4() {
+    const fStr = document.getElementById("rk_f").value;
+    let h  = toNumber(document.getElementById("rk_h").value);
+    let x0 = toNumber(document.getElementById("rk_x0").value);
+    let y0 = toNumber(document.getElementById("rk_y0").value);
+    const xt        = toNumber(document.getElementById("rk_xt").value);
+    const disp      = Math.max(0, Math.min(15, parseInt(document.getElementById("rk_disp").value || "6", 10)));
+    const roundMode = document.getElementById("rk_round_mode").value;
+    const rdec      = Math.max(0, Math.min(15, parseInt(document.getElementById("rk_round_dec").value || "4", 10)));
+
+    if (h === 0) { setOut("rk_out", "ERROR: h cannot be 0."); return; }
+    const forward = xt >= x0;
+    if (!forward && h > 0) h = -h;
+    if (forward  && h < 0) h = -h;
+
+    let f;
+    try { f = compileExpr(fStr, { x: 0, y: 0 }); }
+    catch (err) { setOut("rk_out", "ERROR: " + err.message); return; }
+
+    let out = "RUNGE–KUTTA 4th ORDER\n";
+    out += `dy/dx = ${fStr}\n`;
+    out += `x0=${x0}, y0=${y0}, h=${h}, target x=${xt}\n\n`;
+    out += "step | x_n | y_n | k1 | k2 | k3 | k4 | Δy | y_{n+1}\n";
+    out += "-".repeat(86) + "\n";
+
+    let step = 0, x = x0, y = y0;
+    while ((forward && x < xt - 1e-15) || (!forward && x > xt + 1e-15)) {
+      if (step > 20000) { out += "\nERROR: too many steps.\n"; break; }
+      let hStep = h;
+      const nx = x + hStep;
+      if (forward  && nx > xt) hStep = xt - x;
+      if (!forward && nx < xt) hStep = xt - x;
+
+      let k1 = hStep * f(x, y);
+      let k2 = hStep * f(x + hStep / 2, y + k1 / 2);
+      let k3 = hStep * f(x + hStep / 2, y + k2 / 2);
+      let k4 = hStep * f(x + hStep,     y + k3);
+      let dy = (k1 + 2 * k2 + 2 * k3 + k4) / 6;
+      let yNext = y + dy;
+
+      if (roundMode === "step") {
+        x = roundTo(x, rdec); y = roundTo(y, rdec);
+        k1 = roundTo(k1, rdec); k2 = roundTo(k2, rdec); k3 = roundTo(k3, rdec); k4 = roundTo(k4, rdec);
+        dy = roundTo((k1 + 2 * k2 + 2 * k3 + k4) / 6, rdec);
+        yNext = roundTo(y + dy, rdec);
+      }
+      out += `${String(step).padEnd(5)}| ${fmt(x, disp).padEnd(10)}| ${fmt(y, disp).padEnd(10)}| ${fmt(k1, disp).padEnd(10)}| ${fmt(k2, disp).padEnd(10)}| ${fmt(k3, disp).padEnd(10)}| ${fmt(k4, disp).padEnd(10)}| ${fmt(dy, disp).padEnd(10)}| ${fmt(yNext, disp)}\n`;
+      x = x + hStep; y = yNext; step++;
+    }
+    out += `\nRESULT  y(${xt}) ≈ ${fmt(y, disp)}\n`;
+    setOut("rk_out", out);
+  }
+</script>
+</body>
+</html>
