@@ -19,7 +19,7 @@ An interactive web-based Numerical Methods Calculator that performs step-by-step
 - JavaScript
 
 ## 🌐 Live Demo
-(Insert your GitHub Pages link here after enabling Pages)
+ https://evelyin405.github.io/numerical-methods-calc/
 
 ## 📌 Author
 Evelyin vishali
